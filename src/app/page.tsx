@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <>
       {/* Hero */}
-      <Section className="pt-12 pb-8">
+      <Section className="pt-12 pb-4">
         <Container>
           <h1 className="max-w-2xl text-4xl font-bold leading-tight text-brandDark-900 sm:text-4xl">
             I build backend systems and platforms that are{" "}
@@ -28,29 +28,67 @@ export default function Home() {
             I apply the same principles to AI workflows, bringing structure, validation,
             and reliability to LLM-based systems.
           </p>
+          <p className="mt-4 text-sm text-gray-500">
+            Previously at Roche • 9 years building backend & platform systems
+            <br /><br />
+            Open to senior backend / platform opportunities
+          </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button href="/work/index">Explore Work</Button>
-            <Button href="/resume" variant="secondary">Resume</Button>
+            <Button href="/resume" variant="secondary">View Resume</Button>
           </div>
         </Container>
       </Section>
 
-      {/* Featured Project */}
-      <Section className="py-6">
+      <Section className="py-4">
         <Container>
-          <div className="bg-white rounded-xl p-8 md:p-10 shadow-sm border border-slate-100 border-t-2 border-brandPink-200/40 bg-white/90 shadow-[0_18px_40px_-24px_rgba(223,63,116,0.35)] transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_24px_48px_-24px_rgba(223,63,116,0.45)]">
-            <p className="text-sm uppercase tracking-wide text-slate-400 mb-3">
-              Selected Work
+          {/* Section header */}
+          <div className="mb-6">
+            <p className="text-sm uppercase font-medium tracking-wide text-brandPink-500">
+              Systems
             </p>
-            <h2 className="mb-3 text-2xl font-bold text-gray-900">Agent Workflow Engine</h2>
-            <p className="text-lg text-slate-600 leading-relaxed mb-5 max-w-2xl">
-              A system for orchestrating multi-step AI workflows using a DAG execution model.
-              Designed to make LLM pipelines reliable through structured outputs, validation, and built-in retry handling.
-            </p>
-            <p className="text-sm text-slate-500 mt-4 mb-6 max-w-2xl">Focused on deterministic execution, structured outputs, and validation-driven reliability for LLM systems.</p>
-            <div className="flex gap-4 mt-2">
-              <Button href="/work/agent-workflow-engine">View Project</Button>
+          </div>
+
+          {/* Project list */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl p-8 border border-slate-100 border-t-2 border-brandPink-200/40 shadow-[0_18px_40px_-24px_rgba(223,63,116,0.35)] transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_24px_48px_-24px_rgba(223,63,116,0.45)]">
+              <h2 className="text-2xl font-bold mb-3">
+                Agent Workflow Engine
+              </h2>
+
+              <p className="text-lg text-slate-600 mb-4">
+                Orchestrates multi-step AI workflows using a DAG execution model, enabling reliable and debuggable LLM pipelines.
+              </p>
+
+              <p className="text-sm text-slate-500 mb-6">
+                Focused on deterministic execution, structured outputs, and validation-driven reliability.
+              </p>
+
+              <Button href="/work/agent-workflow-engine">
+                View Project
+              </Button>
             </div>
+
+            <div className="bg-white rounded-xl p-8 border border-slate-100 border-t-2 border-brandPink-200/40 shadow-[0_18px_40px_-24px_rgba(223,63,116,0.35)] transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_24px_48px_-24px_rgba(223,63,116,0.45)]">
+              <h2 className="text-2xl font-bold mb-3">
+                Metadata Platform
+              </h2>
+
+              <p className="text-lg text-slate-600 mb-4">
+                Centralized system for managing configuration and identity context across multi-tenant services.
+              </p>
+
+              <p className="text-sm text-slate-500 mb-6">
+                Replaced fragmented service logic with a consistent, hierarchical configuration model across tenant, user, and application scopes.
+              </p>
+
+              <div className="mt-6">
+                <Button href="/work/metadata-platform">
+                  View Project
+                </Button>
+              </div>
+            </div>
+
           </div>
         </Container>
       </Section>
