@@ -8,6 +8,29 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        brandPink: {
+          50: "#fff7fa",
+          100: "#ffe8f0",
+          200: "#ffd1e0",
+          300: "#ffb0ca",
+          400: "#ff86ad",
+          500: "#f55f90",
+          600: "#df3f74",
+        },
+        brandDark: {
+          50: "#f3f4f6",
+          100: "#d9dde5",
+          200: "#b8bfcc",
+          300: "#909aad",
+          400: "#677186",
+          500: "#434c5f",
+          600: "#2c3341",
+          700: "#1f2430",
+          800: "#171b24",
+          900: "#10131a",
+        },
+      },
       fontFamily: {
         sans: [
           "ui-sans-serif",

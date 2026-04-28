@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/projects/agent-dag", label: "Project" },
-  { href: "/ai-workflow", label: "AI Workflow" },
+  { href: "/work/index", label: "Work" },
+  { href: "/approach/ai-in-engineering", label: "Approach" },
   { href: "/resume", label: "Resume" },
 ];
 
@@ -20,7 +20,7 @@ export default function Nav() {
           href="/"
           className="font-semibold text-gray-900 hover:text-gray-600 transition-colors"
         >
-          JT Sanchez
+          Travis Sanchez
         </Link>
         <ul className="flex items-center gap-1">
           {navLinks.map(({ href, label }) => {

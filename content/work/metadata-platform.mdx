@@ -1,0 +1,126 @@
+---
+title: "Metadata Platform for Multi-Tenant Systems"
+description: "A centralized system for managing configuration and identity context across services."
+---
+
+## Overview
+
+As the platform scaled, configuration and identity context became fragmented across services, leading to
+inconsistent behavior and increasing operational complexity.
+
+I designed and implemented a centralized metadata platform to unify configuration management and provide a consistent,
+context-aware interface for resolving runtime behavior.
+
+The system enabled flexible, app-agnostic configuration across tenant, user, and application scopes, while reducing duplication
+and improving developer experience across the platform.
+
+> Note: This is a high-level description of a system I worked on. Details have been generalized to avoid sharing proprietary information.
+
+## Problem
+
+As the platform grew, configuration and identity context became increasingly difficult to manage:
+
+- Each service implemented its own configuration logic
+- No consistent model for overrides (tenant vs user vs application)
+- Multiple API calls were required to assemble runtime context
+- Key-value storage models struggled to represent relationships and inheritance
+
+This created several issues:
+
+- duplicated and inconsistent configuration across services
+- increased latency from multiple lookups per request
+- difficulty onboarding new applications into the platform
+- lack of a single source of truth for configuration
+
+At scale, this made the system harder to reason about and slowed down product development.
+
+## Approach
+
+Instead of continuing to extend service-specific configuration logic, I introduced a centralized metadata
+platform that separated configuration from application code.
+
+The system was designed around a few key principles:
+
+- Configuration is app-agnostic and globally accessible across the platform
+- Resolution is centralized, rather than implemented independently across services
+- Configuration supports hierarchical inheritance across scopes (application → tenant → user)
+
+This allowed applications to request a fully resolved configuration view at runtime, instead of assembling it manually.
+
+## Architecture
+
+The system was built as a service-oriented platform component, designed to sit between applications and their configuration data.
+
+- **Service Layer**
+  - Node.js service exposing platform APIs
+  - Provided a `/me` endpoint to resolve contextual metadata in a single request
+
+- **Storage**
+  - Postgres used to model relationships and support hierarchical configuration
+
+- **Resolution Engine**
+  - Applied inheritance rules across scopes (tenant → user → application)
+  - Returned the most specific configuration value based on context
+
+- **Consumers**
+  - Multiple downstream applications relied on resolved metadata
+  - Enabled consistent configuration patterns across the platform
+
+The design prioritized a clear separation between configuration definition and runtime resolution.
+
+## Key Decisions
+
+### **Flexible metadata schema**
+
+Each metadata entry followed a consistent structure, allowing configuration to evolve without requiring code changes.
+
+This enabled new use cases without modifying downstream services.
+
+### **Hierarchical configuration model**
+
+The system supported layered configuration across scopes (application, tenant, user), with inheritance rules determining the final resolved value.
+
+This reduced duplication while preserving flexibility.
+
+### Context-aware resolution via `/me`
+
+Instead of requiring clients to fetch and combine configuration across multiple services, the system exposed a single `/me` endpoint that returned a fully resolved view based on request context.
+
+Clients provided identifiers such as user, tenant, and application, and the system applied inheritance rules to return the most specific configuration.
+
+This reduced the number of API calls per request and simplified integration for downstream services.
+
+This centralized resolution simplified client logic, while introducing a clear responsibility boundary within the platform.
+
+## Key Tradeoffs
+
+To keep the system practical and adoptable, several design decisions were made:
+
+- **Centralized service over embedded logic**
+  - introduced a dependency, but removed duplicated logic across services
+
+- **Relational storage over key-value**
+  - increased schema complexity, but enabled hierarchical relationships and inheritance
+
+- **Runtime resolution vs precomputed values**
+  - allowed flexibility, at the cost of additional lookup logic
+
+- **Single aggregation endpoint (`/me`)**
+  - simplified client usage, but concentrated responsibility in one service
+
+These tradeoffs prioritized consistency and developer experience over simplicity at the individual service level.
+
+## Impact
+
+- Established a single source of truth for configurations across the platform
+- Reduced duplicated configuration logic across applications and services
+- Improved performance by consolidating multiple lookups into a single request
+- Simplified onboarding for new teams and applications
+- Enabled more dynamic behavior without requiring code changes
+
+## What I Learned
+
+- Key-value storage breaks down when modeling relationships and inheritance
+- Schema design has long-term impact on system flexibility
+- Centralized platform services can significantly improve developer experience
+- Systems that enable dynamic behavior must balance flexibility with clarity and performance

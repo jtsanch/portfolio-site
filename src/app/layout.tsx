@@ -4,16 +4,16 @@ import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
   title: {
-    default: "JT Sanchez — Backend & Platform Engineer",
-    template: "%s | JT Sanchez",
+    default: "Travis Sanchez — Backend & Platform Engineer",
+    template: "%s | Travis Sanchez",
   },
-  description:
-    "Senior software engineer specializing in backend systems, platform engineering, and AI-assisted development workflows.",
+  description: `Senior software engineer specializing in backend systems and platform 
+          engineering with a focus on reliability simplicity, and developer experience`,
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://jtsanchez.dev",
-    siteName: "JT Sanchez Portfolio",
+    url: "TBD",
+    siteName: "Travis Sanchez Portfolio",
   },
 };
 

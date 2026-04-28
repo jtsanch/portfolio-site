@@ -1,3 +1,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-brandDark-50 text-brandDark-800;
+  }
+
+  a,
+  button {
+    @apply transition-colors duration-200 ease-out;
+  }
+}

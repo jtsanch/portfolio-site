@@ -9,7 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@mdx-js/react": "^3.1.1",
+    "gray-matter": "^4.0.3",
+    "mermaid": "^11.14.0",
     "next": "^15.5.15",
+    "next-mdx-remote": "^6.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

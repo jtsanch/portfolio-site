@@ -18,13 +18,13 @@ export default function Button({
   className = "",
 }: ButtonProps) {
   const base =
-    "inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400";
+    "inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brandPink-300 focus-visible:ring-offset-2 focus-visible:ring-offset-brandDark-50";
 
   const variants: Record<ButtonVariant, string> = {
     primary:
-      "bg-gray-900 text-white hover:bg-gray-700",
+      "bg-brandDark-800 text-white shadow-sm hover:-translate-y-0.5 hover:bg-brandDark-700 hover:shadow-lg hover:shadow-brandPink-200/60",
     secondary:
-      "border border-gray-300 text-gray-700 hover:border-gray-500 hover:text-gray-900",
+      "border border-brandDark-200 bg-white/70 text-brandDark-700 hover:border-brandPink-200 hover:bg-brandPink-50 hover:text-brandDark-800",
   };
 
   const classes = `${base} ${variants[variant]} ${className}`;
