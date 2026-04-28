@@ -1,17 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import Container from "@/components/Container";
 import Section from "@/components/Section";
 
 export default function ResumePage() {
-  const [showResume, setShowResume] = useState(false);
-
   return (
       <Container className="max-w-5xl py-16">
         {/* Header */}
         <div className="mb-10 flex items-center gap-5">
           <img
+            alt="Travis Sanchez"
             src="/profile.jpg"
             className="w-16 h-16 rounded-full"
           />
@@ -105,13 +103,6 @@ export default function ResumePage() {
 
           </div>
         </div>
-
-        {showResume && (
-          <iframe
-            src="/resume.pdf"
-            className="w-full h-[600px] mt-10 border"
-          />
-        )}
       </Container>
   );
 }

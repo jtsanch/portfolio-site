@@ -1,9 +1,10 @@
 import { MDXRemote } from "next-mdx-remote/rsc";
 import Mermaid from "@/components/Mermaid";
+import {MDXComponents} from 'mdx/types';
 
 interface MDXRendererProps {
   source: string;
-  components?: Record<string, React.ComponentType<any>>;
+  components?: MDXComponents;
 }
 
 const defaultComponents = {
