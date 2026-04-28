@@ -25,8 +25,8 @@ export default function Home() {
             I design and own backend services and internal platforms, with a focus on
             clear data models, predictable behavior, and strong developer experience.
             <br /><br />
-            I’ve been applying the same principles to AI workflows to bring more
-            structure, validation, and reliability to systems built with LLMs.
+            I apply the same principles to AI workflows, bringing structure, validation,
+            and reliability to LLM-based systems.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button href="/work/index">Explore Work</Button>
@@ -45,19 +45,11 @@ export default function Home() {
             <h2 className="mb-3 text-2xl font-bold text-gray-900">Agent Workflow Engine</h2>
             <p className="text-lg text-slate-600 leading-relaxed mb-5 max-w-2xl">
               A system for orchestrating multi-step AI workflows using a DAG execution model.
-              Designed to make LLM pipelines reliable, with structured outputs, validation,
-              and retry handling built into each step.
+              Designed to make LLM pipelines reliable through structured outputs, validation, and built-in retry handling.
             </p>
-            <p className="text-sm text-slate-500 mt-4 mb-6 max-w-2xl">Focused on reliability, structured outputs, and execution control for LLM-based systems.</p>
+            <p className="text-sm text-slate-500 mt-4 mb-6 max-w-2xl">Focused on deterministic execution, structured outputs, and validation-driven reliability for LLM systems.</p>
             <div className="flex gap-4 mt-2">
-              <Button href="/work/agent-workflow-engine">View Details</Button>
-              <Button
-                href="https://github.com"
-                variant="secondary"
-                external
-              >
-                Try Demo ↗
-              </Button>
+              <Button href="/work/agent-workflow-engine">View Project</Button>
             </div>
           </div>
         </Container>
