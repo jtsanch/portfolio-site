@@ -10,10 +10,8 @@ interface MermaidProps {
 
 let mermaidInitialized = false;
 
-export default function Mermaid(props) {
+export default function Mermaid({ chart, children }: MermaidProps) {
   const ref = useRef<HTMLDivElement>(null);
-    const { chart, children } = props;
-  console.log(props)
   const source = useMemo(() => {
     if (typeof chart === "string" && chart.trim()) return chart;
     if (typeof children === "string" && children.trim()) return children;
