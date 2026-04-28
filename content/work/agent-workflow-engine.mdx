@@ -1,0 +1,189 @@
+---
+title: "Agent Workflow Engine"
+description: "A DAG-based system for orchestrating multi-step AI workflows with built-in reliability."
+---
+
+## Overview
+
+I built a lightweight workflow orchestration engine for multi-step
+AI pipelines using a directed acyclic graph (DAG) execution model.
+
+Rather than starting with a complex or distributed system, I focused on
+building a deterministic, debuggable execution model first, then layering
+in reliability features like validation and retries as needed.
+
+The goal was to make LLM-based workflows predictable, testable, and composable,
+instead of relying on loosely chained prompts.
+
+## Problem
+
+Multi-step AI workflows introduce several practical challenges:
+- Outputs are non-deterministic and difficult to validate
+- Failures in one step can break the entire pipeline
+- Prompt chaining becomes hard to reason about
+- Debugging and observability are limited
+- There is no clear execution state for auditing or retries
+
+Most implementations treat workflows as linear chains of prompts, which makes them fragile and difficult to evolve.
+
+## Approach
+
+Instead of starting with parallel execution or distributed orchestration, I intentionally began with a
+simple, sequential DAG executor:
+- Nodes execute in dependency order
+- Each node receives structured input and produces structured output
+- Execution state is explicitly tracked
+
+This allowed me to prioritize:
+- deterministic execution
+- debuggability
+- low operational complexity
+
+From there, I introduced additional capabilities only when needed, such as validation and retry handling.
+
+## Solution
+
+I designed a DAG-based execution engine where each step is explicitly defined as a node with typed inputs and outputs.
+
+Each node enforces a strict contract:
+
+- structured input
+- schema-validated output
+- explicit retry behavior on failure
+
+This makes workflows predictable and safe to compose across multiple steps.
+
+As a result, workflows are:
+
+- modular
+- testable at each step
+- composable across different tasks
+- observable with clear execution state
+- resilient to partial failures
+
+## Architecture
+
+The system is intentionally built from a small set of composable primitives, prioritizing clarity over abstraction.
+
+- **Execution Engine**
+- Determines which nodes are runnable based on dependencies
+- Manages execution state and retries
+
+- **Node Types**
+- LLM nodes (generate structured output)
+- Tool nodes (external logic or APIs)
+- Transform nodes (pure data transformations)
+- Evaluation nodes (validation and feedback)
+
+- **State Management**
+- Tracks node outputs and execution progress
+- Enables partial recomputation and retries
+
+- **Validation Layer**
+- Ensures all outputs conform to expected schemas before continuing
+
+## Execution Model
+
+<Mermaid chart='flowchart TD
+S0["Initial input: [val1]"] -->|"Execution State<br/>input: [val1]<br/>nodeOutputs: []<br/>runtime: inProgress: [], completed: []"| N1["NodeInstance A<br/> inputBindingss: [val1] <br/> output: {dataVal1}"]
+
+        N1 -->|"Execution State<br/>input: [val1]<br/>nodeOutputs: dataVal1]<br/>runtime: completed: [A]"| N2["NodeInstance B<br/> inputBindingss: [dataVal1] <br/> output: {dataVal2}"]
+
+        N2 -->|"Execution State<br/>input: [val1]<br/>nodeOutputs: [dataVal1, dataVal2]<br/>runtime: completed: [A, B]"| N3["NodeInstance C<br/>inputBindings:[val1,  dataVal2] <br/>output: {dataVal3}"]
+
+        N3 -->|"Execution State<br/>input: [val1]<br/>nodeOutputs: [dataVal1, dataVal2, dataVal3]<br/>runtime: completed: [A, B, C]"| E["Evaluation Node D<br/>inputBindings: [dataVal3] <br/>output: {retryTargetNodeId: nodeInstance C, shouldRetry: boolean}"]
+
+        E -->|valid, passed| F[Final Outputs derived from terminal nodes, but all outputs preserved]
+
+        E -->|retry triggered| N3
+'/>
+
+## Key Tradeoffs
+
+To keep the system simple and reliable in early iterations, I explicitly avoided several common patterns:
+
+- No distributed execution
+  - avoided queues/workers to reduce coordination complexity
+- No persistent workflow state
+  - kept execution in-memory to simplify debugging
+- No advanced scheduling
+  - workflows are triggered explicitly rather than scheduled
+- Limited parallelism initially
+  - prioritized correctness over throughput
+
+These decisions made the system easier to reason about and iterate on, while leaving clear paths for future expansion.
+
+## Key Decisions
+
+### **Structured outputs over free-form text**
+
+Instead of treating LLM output as unstructured text, I enforced schema-validated outputs.
+
+This reduces downstream ambiguity and makes workflows composable across steps.
+
+### **Validation driven retries**
+
+Rather than failing fast, nodes retry based on validation results.
+
+This allows workflows to recover from common LLM inconsistencies without manual intervention.
+
+### **DAG execution over linear chains**
+
+A DAG model allows explicit dependency management and clearer execution reasoning.
+
+I avoided adding parallel execution early to keep behavior predictable.
+
+### **Separation of node types**
+
+Different node types (LLM, tool, transform, evaluation) keep responsibilities clear and improve extensibility.
+
+> Over time, a natural evolution is to move toward a more unified node model, where behavior is defined by role (generation, transformation, evaluation) rather than implementation. In that model, LLMs become one possible execution mechanism rather than a distinct node type.
+
+## Example Workflow
+
+A typical workflow might include:
+
+1. Generate a structured plan using an LLM node
+2. Enrich data via tool nodes (e.g., external APIs)
+3. Transform intermediate results
+4. Validate outputs with an evaluation node
+5. Produce a final structured result
+
+Each step is isolated, validated, and retryable.
+
+## Impact
+
+- Improved reliability of multi-step workflows through enforced structure
+- Reduced failures caused by malformed or unexpected LLM outputs
+- Made workflows easier to debug through explicit execution state
+- Enabled reuse of workflow components across different tasks
+
+## What I Learned
+
+- LLMs are powerful but require strong constraints to be reliable
+- Schema validation is critical for composing multi-step workflows
+- Execution models (like DAGs) matter as much as prompt quality
+- Treating AI systems like distributed systems leads to better outcomes
+
+## Evolution
+
+The system was designed to evolve incrementally:
+- v1
+  - sequential execution
+  - structured inputs/outputs
+  - explicit execution state
+- v2
+  - schema validation layer
+  - retry behavior via evaluation nodes
+
+Further capabilities such as parallel execution or distributed workers are intentionally deferred until
+justified by real workload needs.
+
+## What I Would Do Differently
+
+If I were building this in a production environment:
+- introduce persistent execution state for recovery
+- add queue-based workers for scalability
+- improve observability with node-level metrics
+
+These were intentionally deferred to keep the system focused and lightweight.

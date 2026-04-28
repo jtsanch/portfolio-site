@@ -1,0 +1,176 @@
+---
+title: "AI in Engineering"
+description: "How I apply engineering discipline to AI workflows — from structured prompting to validation, retries, and cost-aware execution."
+---
+
+## Overview
+
+I treat AI as a system component within my engineering workflow — with defined inputs, outputs, validation, and failure handling.
+
+Rather than using AI as an ad hoc tool, I apply the same principles used in backend systems to ensure outputs are reliable, debuggable, and safe to integrate.
+
+The goal is to improve iteration speed and clarity without sacrificing correctness or system design quality.
+
+---
+
+## Principles
+
+### Treat AI as a system component
+
+I treat AI like any external dependency:
+
+- it has defined inputs
+- it produces structured outputs
+- it can fail and must be validated
+
+This avoids over-reliance on outputs and makes behavior easier to reason about.
+
+---
+
+### Structure over free-form prompting
+
+Early use of AI with open-ended prompts led to inconsistent results and poor integration into real systems.
+
+I shifted toward structured inputs and outputs, using:
+
+- clear problem definitions
+- explicit constraints
+- schema-driven responses where possible
+
+This improves reliability and composability.
+
+---
+
+### Iteration over one-shot generation
+
+AI works best when used iteratively:
+
+- generate → evaluate → refine
+- break problems into smaller steps
+- validate outputs before proceeding
+
+This produces more reliable results than large, one-shot prompts.
+
+---
+
+### Constrain before generating
+
+Before using AI, I define:
+
+- the problem
+- success criteria
+- minimal acceptable solution
+
+This ensures outputs are aligned with actual requirements rather than drifting toward generic solutions.
+
+---
+
+## Workflow
+
+A typical workflow looks like:
+
+1. Define problem and constraints
+2. Align on expected output (no code generation yet)
+3. Break work into small, ordered steps
+4. Use AI to implement each step incrementally
+5. Validate outputs and refine
+6. Generate or expand test coverage
+
+AI is used selectively in areas where it improves iteration speed without reducing correctness.
+
+---
+
+## Where AI Fits in Development
+
+- Architecture exploration — evaluating tradeoffs before implementation
+- Boilerplate generation — scaffolding repetitive code with structured prompts
+- Code review assist — validating diffs against common patterns
+- Documentation drafts — generating structured documentation from code
+- Debugging — forming initial hypotheses from errors and context
+
+---
+
+## System Patterns
+
+### Prompt + Schema Validation
+
+Every prompt that produces machine-readable output is paired with a schema.
+
+The model is instructed to return only valid JSON matching that schema, and responses are validated before use.
+
+```ts
+// 1. Define schema
+const schema = {
+  type: "object",
+  properties: {
+    decision:   { type: "string", enum: ["approve", "reject"] },
+    confidence: { type: "number", minimum: 0, maximum: 1 },
+    rationale:  { type: "string", maxLength: 500 },
+  },
+  required: ["decision", "confidence", "rationale"],
+};
+
+// 2. Prompt enforces format
+const prompt = `
+Respond ONLY with JSON matching this schema:
+${JSON.stringify(schema, null, 2)}
+`;
+
+// 3. Validate response before use
+const parsed = JSON.parse(response);
+const valid  = ajv.validate(schema, parsed);
+if (!valid) throw new SchemaValidationError(ajv.errors);
+```
+
+This treats AI output as a contract, not a suggestion.
+
+### Retry Logic for Structured Outputs
+
+Models occasionally return invalid or malformed outputs. Retries are handled explicitly:
+
+- Attempt 1: send original prompt
+- On failure: include validation error + previous output in retry prompt
+- Attempt 2: reduce temperature to limit deviation
+- Attempt 3: escalate to a more capable model
+- After 3 failures: surface error with full trace for debugging
+
+Failures are surfaced explicitly rather than hidden, ensuring correctness over silent degradation.
+
+### Cost & Token Awareness
+
+AI usage is managed with explicit cost and performance constraints:
+
+- Prompt compression — reuse and minimize repeated context
+- Model routing — use cheaper models for simple tasks, stronger models for reasoning
+- Budget per request — enforce limits and fail early if exceeded
+- Logging — track tokens, latency, and cost per request
+- Caching — reuse responses for deterministic prompts
+
+### What Doesn’t Work Well
+
+- long, unstructured prompts
+- treating outputs as inherently correct
+- skipping validation or iteration
+- vague goals or incomplete context
+
+These approaches produce inconsistent results and are difficult to debug.
+
+### Tradeoffs
+
+- Higher implementation complexity vs more reliable outputs
+- Additional validation overhead vs safer downstream integration
+- More structured prompts vs reduced flexibility
+- Cost tracking and routing vs simpler usage patterns
+
+I prioritize correctness and system clarity over speed when these tradeoffs conflict.
+
+### What I Learned
+
+- AI is most effective when constrained by structure and clear requirements
+- reliability comes from validation and iteration, not better prompts
+- breaking problems into steps improves output quality significantly
+- treating AI systems like backend systems leads to better outcomes
+
+### Related Work
+
+- Agent Workflow Engine → /work/agent-workflow-engine
