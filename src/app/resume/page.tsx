@@ -101,14 +101,6 @@ export default function ResumePage() {
               >
                 View / Download Resume
               </a>
-
-              <button
-                  type="button"
-                  onClick={() => setShowResume((value) => !value)}
-                  className="mt-4 block text-gray-700 underline"
-              >
-                {showResume ? "Hide Resume" : "View Resume In Page"}
-              </button>
             </Section>
 
           </div>
