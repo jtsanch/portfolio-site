@@ -79,6 +79,17 @@ export default function ResumePage() {
             </Section>
 
             <Section className="py-4">
+              <h2 className="text-xl font-semibold mb-1">GitHub</h2>
+              <a
+                  href="https://github.com/jtsanch"
+                  className="underline text-sm text-gray-500"
+                  target="_blank"
+              >
+                GitHub
+              </a>
+            </Section>
+
+            <Section className="py-4">
               <h2 className="text-xl font-semibold mb-1">LinkedIn</h2>
               <a
                   href="https://www.linkedin.com/in/travissanchez"
