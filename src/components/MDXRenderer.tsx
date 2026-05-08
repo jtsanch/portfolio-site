@@ -1,6 +1,7 @@
 import { MDXRemote } from "next-mdx-remote/rsc";
 import Mermaid from "@/components/Mermaid";
-import {MDXComponents} from 'mdx/types';
+import ProjectCard from "@/components/ProjectCard";
+import { MDXComponents } from "mdx/types";
 
 interface MDXRendererProps {
   source: string;
@@ -69,17 +70,20 @@ const defaultComponents = {
 const mdxComponents = {
   ...defaultComponents,
   Mermaid,
-}
+  ProjectCard,
+};
 
 export default function MDXRenderer({
   source,
-  components = {
-  },
+  components = {},
 }: MDXRendererProps) {
   return (
     <div className="max-w-3xl">
       <MDXRemote
         source={source}
+        options={{
+          blockJS: false,
+        }}
         components={{ ...mdxComponents, ...components }}
       />
     </div>

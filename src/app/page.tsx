@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Container from "@/components/Container";
+import ProjectCard from "@/components/ProjectCard";
 import Section from "@/components/Section";
 import Button from "@/components/Button";
 
@@ -51,44 +52,38 @@ export default function Home() {
 
           {/* Project list */}
           <div className="space-y-6">
-            <div className="bg-white rounded-xl p-8 border border-slate-100 border-t-2 border-brandPink-200/40 shadow-[0_18px_40px_-24px_rgba(223,63,116,0.35)] transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_24px_48px_-24px_rgba(223,63,116,0.45)]">
-              <h2 className="text-2xl font-bold mb-3">
-                Agent Workflow Engine
-              </h2>
-
-              <p className="text-lg text-slate-600 mb-4">
-                Orchestrates multi-step AI workflows using a DAG execution model, enabling reliable and debuggable LLM pipelines.
+            <ProjectCard
+              title="Agent Workflow Engine"
+              href="/work/agent-workflow-engine"
+              tags={["AI Workflows", "DAG Execution", "Reliability"]}
+              ctaLabel="View Project"
+            >
+              <p>
+                Orchestrates multi-step AI workflows using a DAG execution
+                model, enabling reliable and debuggable LLM pipelines.
               </p>
-
-              <p className="text-sm text-slate-500 mb-6">
-                Focused on deterministic execution, structured outputs, and validation-driven reliability.
+              <p className="text-sm text-slate-500">
+                Focused on deterministic execution, structured outputs, and
+                validation-driven reliability.
               </p>
+            </ProjectCard>
 
-              <Button href="/work/agent-workflow-engine">
-                View Project
-              </Button>
-            </div>
-
-            <div className="bg-white rounded-xl p-8 border border-slate-100 border-t-2 border-brandPink-200/40 shadow-[0_18px_40px_-24px_rgba(223,63,116,0.35)] transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_24px_48px_-24px_rgba(223,63,116,0.45)]">
-              <h2 className="text-2xl font-bold mb-3">
-                Metadata Platform
-              </h2>
-
-              <p className="text-lg text-slate-600 mb-4">
-                Centralized system for managing configuration and identity context across multi-tenant services.
+            <ProjectCard
+              title="Metadata Platform"
+              href="/work/metadata-platform"
+              tags={["Platform Systems", "Multi-Tenant", "Configuration"]}
+              ctaLabel="View Project"
+            >
+              <p>
+                Centralized system for managing configuration and identity
+                context across multi-tenant services.
               </p>
-
-              <p className="text-sm text-slate-500 mb-6">
-                Replaced fragmented service logic with a consistent, hierarchical configuration model across tenant, user, and application scopes.
+              <p className="text-sm text-slate-500">
+                Replaced fragmented service logic with a consistent,
+                hierarchical configuration model across tenant, user, and
+                application scopes.
               </p>
-
-              <div className="mt-6">
-                <Button href="/work/metadata-platform">
-                  View Project
-                </Button>
-              </div>
-            </div>
-
+            </ProjectCard>
           </div>
         </Container>
       </Section>

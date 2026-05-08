@@ -1,176 +1,352 @@
 ---
 title: "AI in Engineering"
-description: "How I apply engineering discipline to AI workflows — from structured prompting to validation, retries, and cost-aware execution."
+description: "Principles for building reliable systems that incorporate AI as a probabilistic execution dependency."
 ---
 
 ## Overview
 
-I treat AI as a system component within my engineering workflow — with defined inputs, outputs, validation, and failure handling.
+I treat AI as a probabilistic execution dependency, not a source of truth.
 
-Rather than using AI as an ad hoc tool, I apply the same principles used in backend systems to ensure outputs are reliable, debuggable, and safe to integrate.
+Once AI output becomes part of a real system, the engineering problem changes. The challenge is no longer generating useful responses. It is enforcing contracts, containing failure modes, instrumenting behavior, and maintaining predictable downstream execution.
 
-The goal is to improve iteration speed and clarity without sacrificing correctness or system design quality.
+This page focuses on the systems engineering patterns I use when AI becomes part of runtime architecture.
 
----
-
-## Principles
-
-### Treat AI as a system component
-
-I treat AI like any external dependency:
-
-- it has defined inputs
-- it produces structured outputs
-- it can fail and must be validated
-
-This avoids over-reliance on outputs and makes behavior easier to reason about.
+It is separate from my AI-assisted software delivery workflow, which focuses on using AI during implementation.
 
 ---
 
-### Structure over free-form prompting
+## Core Principles
 
-Early use of AI with open-ended prompts led to inconsistent results and poor integration into real systems.
+### AI Outputs Are Untrusted Producers
 
-I shifted toward structured inputs and outputs, using:
+AI-generated outputs are machine inputs from a probabilistic producer.
 
-- clear problem definitions
-- explicit constraints
-- schema-driven responses where possible
+They should be treated no differently than any other external dependency: contract-bound, validated, and rejected when invalid.
 
-This improves reliability and composability.
-
----
-
-### Iteration over one-shot generation
-
-AI works best when used iteratively:
-
-- generate → evaluate → refine
-- break problems into smaller steps
-- validate outputs before proceeding
-
-This produces more reliable results than large, one-shot prompts.
-
----
-
-### Constrain before generating
-
-Before using AI, I define:
-
-- the problem
-- success criteria
-- minimal acceptable solution
-
-This ensures outputs are aligned with actual requirements rather than drifting toward generic solutions.
-
----
-
-## Workflow
-
-A typical workflow looks like:
-
-1. Define problem and constraints
-2. Align on expected output (no code generation yet)
-3. Break work into small, ordered steps
-4. Use AI to implement each step incrementally
-5. Validate outputs and refine
-6. Generate or expand test coverage
-
-AI is used selectively in areas where it improves iteration speed without reducing correctness.
-
----
-
-## Where AI Fits in Development
-
-- Architecture exploration — evaluating tradeoffs before implementation
-- Boilerplate generation — scaffolding repetitive code with structured prompts
-- Code review assist — validating diffs against common patterns
-- Documentation drafts — generating structured documentation from code
-- Debugging — forming initial hypotheses from errors and context
-
----
-
-## System Patterns
-
-### Prompt + Schema Validation
-
-Every prompt that produces machine-readable output is paired with a schema.
-
-The model is instructed to return only valid JSON matching that schema, and responses are validated before use.
+A simple example is structured decision output:
 
 ```ts
-// 1. Define schema
-const schema = {
-  type: "object",
-  properties: {
-    decision:   { type: "string", enum: ["approve", "reject"] },
-    confidence: { type: "number", minimum: 0, maximum: 1 },
-    rationale:  { type: "string", maxLength: 500 },
-  },
-  required: ["decision", "confidence", "rationale"],
+type ReviewDecision = {
+  decision: "approve" | "reject";
+  confidence: number;
+  rationale: string;
 };
-
-// 2. Prompt enforces format
-const prompt = `
-Respond ONLY with JSON matching this schema:
-${JSON.stringify(schema, null, 2)}
-`;
-
-// 3. Validate response before use
-const parsed = JSON.parse(response);
-const valid  = ajv.validate(schema, parsed);
-if (!valid) throw new SchemaValidationError(ajv.errors);
 ```
 
-This treats AI output as a contract, not a suggestion.
+A downstream workflow should never assume this shape is correct simply because the model returned JSON.
 
-### Retry Logic for Structured Outputs
+The execution boundary should validate the payload before use:
 
-Models occasionally return invalid or malformed outputs. Retries are handled explicitly:
+```ts
+const parsed = JSON.parse(response);
+const result = ReviewDecisionSchema.safeParse(parsed);
 
-- Attempt 1: send original prompt
-- On failure: include validation error + previous output in retry prompt
-- Attempt 2: reduce temperature to limit deviation
-- Attempt 3: escalate to a more capable model
-- After 3 failures: surface error with full trace for debugging
+if (!result.success) {
+  throw new ContractViolationError(result.error);
+}
+```
 
-Failures are surfaced explicitly rather than hidden, ensuring correctness over silent degradation.
+This creates a hard execution boundary between probabilistic generation and deterministic system behavior.
 
-### Cost & Token Awareness
+---
 
-AI usage is managed with explicit cost and performance constraints:
+### Reliability Emerges From Execution Design
 
-- Prompt compression — reuse and minimize repeated context
-- Model routing — use cheaper models for simple tasks, stronger models for reasoning
-- Budget per request — enforce limits and fail early if exceeded
-- Logging — track tokens, latency, and cost per request
-- Caching — reuse responses for deterministic prompts
+Prompt quality helps.
 
-### What Doesn’t Work Well
+Reliability comes from bounded execution semantics, validation checkpoints, recovery policies, and deterministic downstream consumers.
 
-- long, unstructured prompts
-- treating outputs as inherently correct
-- skipping validation or iteration
-- vague goals or incomplete context
+A practical workflow might look like:
 
-These approaches produce inconsistent results and are difficult to debug.
+```txt
+Request
+  ↓
+Prompt Construction
+  ↓
+Structured Output Contract
+  ↓
+Validation
+  ↓
+Retry / Recovery
+  ↓
+Typed Consumer
+```
 
-### Tradeoffs
+The model is one component in the execution path.
 
-- Higher implementation complexity vs more reliable outputs
-- Additional validation overhead vs safer downstream integration
-- More structured prompts vs reduced flexibility
-- Cost tracking and routing vs simpler usage patterns
+The orchestration layer is responsible for making that path reliable.
 
-I prioritize correctness and system clarity over speed when these tradeoffs conflict.
+---
 
-### What I Learned
+### Failure Modes Must Be Designed For
 
-- AI is most effective when constrained by structure and clear requirements
-- reliability comes from validation and iteration, not better prompts
-- breaking problems into steps improves output quality significantly
-- treating AI systems like backend systems leads to better outcomes
+AI failures are not mysterious. Common failure modes include **contract violations**, **malformed structured output**, **degraded reasoning under ambiguity**, **latency variance**, **rate limiting**, **retry amplification**, and **partial execution failure across multi-step workflows**.
 
-### Related Work
+Reliable systems anticipate these failure domains explicitly.
 
-- Agent Workflow Engine → /work/agent-workflow-engine
+---
+
+## Practical AI System Workflow
+
+A typical runtime workflow:
+
+```txt
+Incoming Request
+  ↓
+Prompt Construction
+  ↓
+Model Execution
+  ↓
+Structured Validation
+  ↓
+Retry / Recovery Policy
+  ↓
+Telemetry + Logging
+  ↓
+Typed Consumer System
+```
+
+Engineering concerns at each layer:
+
+* **Prompt Construction**
+Define bounded instructions, expected contracts, and execution constraints.
+
+* **Model Execution**
+The probabilistic generation step where outputs may vary despite identical inputs.
+
+* **Validation**
+Enforce contracts and reject malformed or structurally invalid outputs.
+
+* **Retry / Recovery**
+Apply bounded corrective behavior when execution fails.
+
+* **Telemetry**
+Capture operational visibility for debugging, reliability, and cost analysis.
+
+* **Consumer System**
+Execute deterministic downstream behavior against validated outputs only.
+
+The engineering challenge is predictable execution in the presence of probabilistic generation.
+
+---
+
+## Structured Output Contracts
+
+One of the most effective reliability patterns is treating AI output as typed intermediate state.
+
+The model is an untrusted producer.
+
+Downstream systems consume only validated, machine-readable outputs that satisfy explicit contracts.
+
+Invalid outputs are rejected, corrected, or escalated.
+
+Example:
+
+```ts
+const OutputSchema = z.object({
+  entities: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      confidence: z.number(),
+    })
+  ),
+});
+```
+
+Execution:
+
+```ts
+const parsed = OutputSchema.safeParse(JSON.parse(raw));
+
+if (!parsed.success) {
+  return retryWithValidationFeedback(raw, parsed.error);
+}
+```
+
+This creates deterministic boundaries around probabilistic behavior.
+
+---
+
+## Retry & Recovery
+
+Retries are useful, but dangerous when unbounded.
+
+Poor retry design can amplify both latency and cost while repeatedly failing for the same structural reason.
+
+A practical bounded retry policy:
+
+```txt
+Attempt 1:
+- original prompt
+- standard model
+
+If contract violation:
+↓
+Attempt 2:
+- include validation feedback
+- request correction only
+
+If still invalid:
+↓
+Attempt 3:
+- escalate model capability
+- preserve same contract
+
+If still invalid:
+↓
+Terminal failure
+```
+
+Pseudo-code:
+
+```ts
+for (const attempt of retryPolicy) {
+  const response = await executeModel(attempt);
+
+  const parsed = validate(response);
+
+  if (parsed.success) {
+    return parsed.data;
+  }
+}
+
+throw new WorkflowExecutionError();
+```
+
+Key design rules:
+
+- retries must be bounded
+- retries should be structurally corrective
+- escalation should be intentional
+- failure must remain explicit
+
+---
+
+## Observability
+
+AI systems are difficult to debug without instrumentation.
+
+Operational telemetry matters.
+
+Signals I care about:
+
+- token consumption by workflow
+- latency distribution
+- per-model failure rates
+- validation failure frequency
+- retry amplification
+- escalation frequency
+- terminal failures
+
+Example:
+
+A workflow that "works" but retries 40% of the time is not healthy.
+
+A pipeline that silently escalates to expensive models under load may be functionally correct but operationally unstable.
+
+Without telemetry, these failures remain invisible.
+
+---
+
+## Cost & Execution Controls
+
+Operational controls matter because AI systems can fail expensively.
+
+Useful patterns:
+
+- model routing
+- prompt compression
+- caching deterministic outputs
+- request budgets
+- fail-fast execution constraints
+
+Example routing strategy:
+
+```txt
+Extraction / classification
+→ cheaper model
+
+Validation / evaluator
+→ same tier
+
+Complex fallback reasoning
+→ stronger model only if required
+```
+
+Execution budgets:
+
+```ts
+if (workflowTokenSpend > MAX_WORKFLOW_BUDGET) {
+  throw new BudgetExceededError();
+}
+```
+
+Cost is an execution concern, not just a billing concern.
+
+---
+
+## Anti-Patterns
+
+* **Implicit Contracts**
+AI output is consumed directly without validation, creating fragile downstream behavior.
+
+* **Unbounded Retries**
+Repeated failures without structural correction amplify latency, cost, and operational instability.
+
+* **Hidden Prompt Coupling**
+Critical behavior depends on undocumented prompt assumptions, making systems brittle and difficult to evolve.
+
+* **Blind Trust in Model Correctness**
+A coherent response is treated as valid system behavior without verification.
+
+* **Missing Telemetry**
+Reliability failures remain invisible because there is no operational visibility into runtime behavior.
+
+---
+
+## Tradeoffs
+
+Reliable AI systems introduce familiar engineering tradeoffs.
+
+* **Implementation Complexity vs Reliability**
+Example: adding schema validation, retry policies, and telemetry increases implementation effort, but prevents silent invalid outputs from reaching downstream systems.
+
+* **Flexibility vs Deterministic Control**
+Example: allowing broad free-form responses gives the model more freedom, but typed structured outputs create predictable execution boundaries.
+
+* **Speed vs Correctness**
+Example: directly consuming the first model response is faster, while validation and retry workflows add latency but improve correctness.
+
+* **Stronger Models vs Cost**
+Example: routing all requests to the most capable model improves quality in some cases, but dramatically increases operational spend.
+
+* **Autonomy vs Bounded Execution**
+Example: allowing the model to dynamically decide workflow behavior increases flexibility, while explicit state transitions and execution constraints improve reliability.
+
+I generally bias toward explicit control when these tradeoffs conflict.
+
+---
+
+## Lessons Learned
+
+A few recurring lessons:
+
+- orchestration quality matters more than raw model capability
+- validation beats trust
+- deterministic boundaries improve probabilistic systems
+- retries need engineering discipline
+- observability is mandatory
+- better prompts are not substitutes for system design
+
+AI becomes much more useful when treated as an execution dependency inside a controlled system, not an inherently trustworthy reasoning engine.
+
+---
+
+## Related Work
+
+**Agent Workflow Engine**
+
+A DAG-based orchestration engine exploring typed intermediate state, validation-driven retries, and deterministic execution control for multi-step AI workflows.
+
+[Read more...](/work/agent-workflow-engine)

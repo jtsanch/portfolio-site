@@ -1,0 +1,358 @@
+---
+title: "Constraint-Driven AI Feature Delivery"
+description: "How I use AI coding tools with constraints, contracts, and scoped execution to ship features reliably without drift."
+---
+
+## Overview
+
+AI coding tools are useful, but left unconstrained they tend to make the same mistakes repeatedly:
+
+- inventing logic, fields, or abstractions that were never needed
+- refactoring unrelated code outside the intended scope
+- optimizing locally in ways that conflict with the intended architecture
+- consuming excessive tokens through repeated broad context
+
+The issue usually is not model capability, but missing engineering structure. 
+AI works far better as a junior engineer than a senior architect.
+
+When I code myself things like architecture, ownership boundaries, implementation ordering, and
+validation are mostly implicit. AI tools need those decisions made explicit.
+
+I define architecture, contracts, and implementation boundaries up front. I break implementation into small constrained steps. I validate outputs the same way I would review a junior engineer's pull request.
+
+That is where these tools become consistently useful.
+
+---
+
+## Why Naive AI Coding Breaks Down
+
+Open-ended prompting works well for exploration, but does not work well for implementation.
+
+A prompt like `Build a user management feature` asks the
+model to make architectural decisions that were never explicitly defined.
+
+It does not know what the system looks like, how it is structured, what ownership boundaries exist, or what tradeoffs matter in the current codebase. It will infer those decisions from the prompt and from generic learned patterns.
+
+The result may be functional code, but *not aligned implementation*.
+
+Common failure modes:
+
+- over-engineering around imagined future requirements
+- abstractions that do not match the actual system
+- hidden assumptions about ownership or data flow
+- implementation drift from the intended architecture
+- unrelated code changes that seem "helpful"
+- excessive token usage due to repeated broad context
+
+The broader the prompt, the worse this gets. Large prompts encourage large reasoning jumps,
+and large reasoning jumps tend to bury architectural decisions inside implementation details.
+
+The failure mode is familiar to anyone who has reviewed an oversized pull request where too much is changing at once.
+The code may work, but it is hard to review, and it often contains architectural decisions that should have been surfaced separately.
+
+---
+
+## Where AI Helps and Where I Do Not Delegate
+
+AI is useful during feature definition, but not as the primary architect.
+
+I define the general system shape first, including:
+- requirements and explicit non-goals
+- core invariants
+- API and data model direction
+- etc...
+
+From there, AI becomes a refinement tool. It works well for:
+- pressure-testing assumptions, surfacing edge cases, and identifying failure scenarios
+- challenging API ergonomics
+- suggesting improvements within defined constraints
+- helping convert rough ideas into structured feature specifications
+
+What I do not delegate:
+
+- architectural ownership
+- tradeoff decisions
+- system decomposition
+- etc...
+
+AI is good at producing coherent answers, but is not good for context-appropriate engineering decisions.
+
+---
+
+## The Workflow
+
+I move architecture decisions earlier and narrow implementation scope later.
+
+```txt
+Feature Definition
+    ↓
+Feature Specification
+    ↓
+Implementation Skeleton
+    ↓
+Atomic Execution Steps
+    ↓
+Constrained AI Implementation
+    ↓
+Validation
+```
+
+The goal is simple:
+
+AI should execute within constraints, not invent the system.
+
+---
+
+## Feature Specification
+
+As with a junior engineer, implementation quality improves dramatically when requirements, contracts, and ownership boundaries are explicit.
+
+For backend work, I typically define:
+
+- exact schema definitions
+- DTOs / domain types
+- API request and response contracts
+- success and failure semantics
+- business flow ordering
+- invariants
+- explicit non-goals
+
+For frontend work, I define:
+
+- component ownership boundaries
+- state ownership
+- interaction flows
+- API integration contracts
+- UX constraints
+- explicit non-goals
+
+Example schema definition:
+
+```ts
+export const userTasks = pgTable("user_tasks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull(),
+  title: text("title").notNull(),
+  status: text("status").notNull(),
+});
+```
+
+Example business flow:
+
+```txt
+Create Task Business Flow
+
+1. Validate target user exists
+   - if missing → 404
+
+2. Enforce active task invariant
+   - if active task count >= 5 → 409
+
+3. Enforce ownership / permission rules
+   - invalid ownership assignment → 403
+
+4. Execute transactional create
+   - insert task
+   - create dependent records if required
+
+5. Map domain result to TaskResponse DTO
+   - no DB entity leakage
+```
+
+This removes ambiguity.
+
+Instead of asking AI to infer implementation behavior, I define it.
+
+---
+
+## Implementation Skeleton: Remove Architectural Guessing
+
+Before implementation starts, I define exactly where code belongs.
+
+This is often an implicit process when coding manually. AI tools need it to be explicit.
+
+Example implementation surface:
+
+```txt
+Data Layer: packages/db/schema/userTasks.ts
+- owns schema definition
+- invariant: a user may not exceed 5 active tasks
+
+Domain Layer: apps/api/src/services/taskService.ts
+- owns business logic execution
+- enforces ordering, invariants, permissions, transactions
+
+API Layer: apps/api/src/routes/tasks.ts
+- owns request validation
+- invokes domain service
+- maps API response DTOs
+
+Frontend Page: apps/web/src/features/tasks/TasksPage.tsx
+- owns feature composition
+- handles loading, success, and error UI states
+
+Frontend Hook: apps/web/src/features/tasks/useTasks.ts
+- owns API integration logic
+- exposes typed actions to UI components
+```
+
+Without this, AI will guess:
+
+- where logic belongs
+- which files should exist
+- where abstractions should live
+- what should be shared or duplicated
+
+That frequently produces scattered ownership.
+
+Example:
+
+```txt
+routes/tasks.ts
+- validation
+- business rules
+- direct DB writes
+
+taskService.ts
+- duplicate validation
+
+useTasks.ts
+- response reshaping with hidden assumptions
+```
+
+The feature may work.
+
+The architecture usually does not.
+
+---
+
+## AI-Assisted Implementation Steps
+
+Once architecture and ownership are explicit, implementation becomes constrained execution.
+
+I first provide the feature specification as a non-coding context step so the implementation tool understands constraints.
+
+Then I break implementation into small file-scoped slices.
+
+Example implementation slice:
+
+```txt
+Update only:
+- apps/api/src/routes/tasks.ts
+- apps/api/src/services/taskService.ts
+
+Implement:
+POST /api/tasks
+
+Requirements:
+- validate CreateTaskRequest DTO
+- enforce active task limit
+- create task transactionally
+- return TaskResponse DTO
+
+Coding Logic Constraints:
+Business flow must follow:
+
+1. Validate authenticated user exists
+   - if missing → 404
+
+2. Enforce active task invariant
+   - if active task count >= 5 → 409
+
+3. Enforce ownership / permission rules
+   - invalid ownership assignment → 403
+
+4. Execute transactional create
+   - create task
+   - create dependent records if required
+
+5. Map result to TaskResponse DTO
+   - no raw DB entity leakage
+
+Do not:
+- add extra APIs
+- refactor unrelated code
+- introduce abstractions
+- duplicate validation already owned elsewhere
+- add speculative future behavior
+
+At the end, provide:
+- assumptions made
+- missing requirements
+- intentionally skipped edge cases
+```
+> This is intentionally simplified. My actual prompts often include additional constraints around response codes, validation ownership,
+> frontend state boundaries, or testing scope depending on the feature.
+
+At the end of each step, I require a short summary:
+
+- assumptions made
+- missing requirements
+- intentionally skipped edge cases
+
+That summary is important. It surfaces drift early instead of discovering it after several implementation steps.
+
+---
+
+## Token and Context Discipline
+
+More context does not automatically improve output. Broad repeated context increases:
+- token cost
+- latency
+- reasoning surface
+- unrelated implementation drift
+
+I use broader prompts during specification refinement, where exploration and edge-case analysis are useful, such as:
+- pressure-test this API design for failure cases
+- what concurrency edge cases exist in this workflow?
+- what future extensions would materially affect this schema?
+
+Once implementation begins, context gets aggressively narrowed. I then minimize context
+and token usage by focusing prompt on:
+- exact scope
+- target files
+- implementation constraints
+- expected contract
+
+
+---
+
+## Example Feature Slice
+
+A representative constrained feature:
+
+Build a task workflow feature with:
+
+- explicit state transitions
+- ownership rules
+- transactional backend behavior
+- CRUD API endpoints
+- a minimal frontend task management flow
+
+Process:
+
+1. define schema
+2. define transition rules
+3. define request / response contracts
+4. define implementation ownership
+5. break work into implementation slices
+6. execute incrementally
+7. validate drift during implementation
+8. expand tests once behavior stabilizes
+
+This keeps implementation disciplined while still moving quickly.
+
+---
+
+## Lessons Learned
+
+A few practical lessons from repeated use:
+
+- architecture should be explicit before implementation
+- contracts matter more than clever prompts
+- smaller scoped execution beats broad generation
+- validation is cheaper than cleanup
+- repeated broad context usually hurts more than it helps
+- AI performs best when execution is constrained, not open-ended
+
+I treat AI as a force multiplier for disciplined engineering, not a replacement for engineering judgment.
